@@ -4,8 +4,13 @@ import io.github.guilhermemelo01.domain.category.Category;
 import io.github.guilhermemelo01.domain.category.CategoryGateway;
 import io.github.guilhermemelo01.domain.validation.handler.Notification;
 import io.github.guilhermemelo01.domain.validation.handler.ThrowsValidationHandler;
+import io.vavr.API;
+import io.vavr.control.Either;
 
 import java.util.Objects;
+
+import static io.vavr.API.Left;
+import static io.vavr.API.Try;
 
 public class DefaultCreateCategoryUseCase extends CreateCategoryUseCase {
 
@@ -16,16 +21,19 @@ public class DefaultCreateCategoryUseCase extends CreateCategoryUseCase {
     }
 
     @Override
-    public CreateCategoryOutput execute(final CreateCategoryCommand aCommand) {
+    public Either<Notification, CreateCategoryOutput> execute(final CreateCategoryCommand aCommand) {
 
         Notification notification = Notification.create();
         final var category = Category.newCategory(aCommand.name(), aCommand.description(), aCommand.isActive());
         category.validate(notification);
 
-        if (notification.hasErrors()){
+        return notification.hasErrors() ? Left(notification) : create(category);
+    }
 
-        }
-
-        return CreateCategoryOutput.from(this.categoryGateway.create(category));
+    private Either<Notification, CreateCategoryOutput> create(Category category){
+        return Try(() -> this.categoryGateway.create(category))
+                .toEither()
+                .bimap(Notification::create, CreateCategoryOutput::from);
     }
 }
+
