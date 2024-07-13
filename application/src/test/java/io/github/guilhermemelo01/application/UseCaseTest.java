@@ -9,7 +9,5 @@ public class UseCaseTest {
 
     @Test
     public void testCreateUseCase(){
-
-
     }
 }
